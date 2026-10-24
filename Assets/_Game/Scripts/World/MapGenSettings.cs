@@ -5,8 +5,7 @@ namespace LeafBrawl.World
     /// <summary>
     /// Harita üretiminin girdileri (SRS 3.12). Uzunluklar dünya px'tir.
     /// Merkez değerler balance.json "map" bölümünden gelir (<see cref="FromConfig"/>).
-    /// Alttaki "sapma" alanları henüz balance.json'da yok: "sözleşme" PR'ı ile Balance.MapConfig'e
-    /// eklenince FromConfig oradan okuyacak ve buradaki varsayılanlar silinecek.
+    /// Sapma ve doğrulama değerleri de aynı bölümden gelir (SRS 3.12, NFR-05).
     /// </summary>
     public class MapGenSettings
     {
@@ -34,20 +33,17 @@ namespace LeafBrawl.World
         /// <summary>balance.json "zone": ilk daralmanın bittiği yarıçap. Koru ağaçları bunun dışında kalmalı (SRS 3.12). 0 = kontrol yok.</summary>
         public float GroveOutsideZonePx;
 
-        // ---- Sapma ve doğrulama [geçici: balance.json "map"e sözleşme PR'ı ile taşınacak] ----
-        public float AngleJitterDeg = 20f;       // küme ve koru: kendi dilimi içinde (küme adımı 45°)
-        public float RadiusJitterPx = 150f;      // küme ve koru
-        public float RockAngleJitterDeg = 0f;    // kayalar merkez açıklığın parçası: sabit
-        public float RockRadiusJitterPx = 0f;
-        public float BushAngleJitterDeg = 18f;
-        public float BushRadiusJitterPx = 120f;
-        public float TreeJitterPx = 15f;         // küme/koru içindeki her ağaç (x ve y ayrı)
-        public int PlaceTries = 30;              // tek bir küme/koru/çalılığın yerleşmek için deneme sayısı
-        public float BoundsMarginPx = 40f;       // harita kenarından en az bu kadar içeride
-        public float MinGapPx = 20f;             // gövde ve kaya arası en az boşluk
-        public float MinPassagePx = 80f;         // küme/koru daireleri arası en az geçit
-        public float SpawnClearPx = 150f;        // doğma noktası çevresi boş alan
-        public int MaxRetries = 50;
+        // ---- Sapma ve doğrulama (balance.json "map") ----
+        public float AngleJitterDeg, RadiusJitterPx;             // küme ve koru: kendi dilimi içinde (küme adımı 45°)
+        public float RockAngleJitterDeg, RockRadiusJitterPx;     // kayalar: 0 = sabit
+        public float BushAngleJitterDeg, BushRadiusJitterPx;
+        public float TreeJitterPx;                               // küme/koru içindeki her ağaç (x ve y ayrı)
+        public int PlaceTries;                                   // tek bir küme/koru/çalılığın yerleşme denemesi
+        public float BoundsMarginPx;                             // harita kenarından en az bu kadar içeride
+        public float MinGapPx;                                   // gövde ve kaya arası en az boşluk
+        public float MinPassagePx;                               // küme/koru daireleri arası en az geçit
+        public float SpawnClearPx;                               // doğma noktası çevresi boş alan
+        public int MaxRetries;
 
         public static MapGenSettings FromConfig(Balance b)
         {
@@ -86,6 +82,19 @@ namespace LeafBrawl.World
                 InnerBushRadiusPx = m.innerBushRadiusPx,
                 SpawnRingPx = m.spawnRingPx,
                 SpawnAnglesDeg = m.spawnAnglesDeg,
+                AngleJitterDeg = m.angleJitterDeg,
+                RadiusJitterPx = m.radiusJitterPx,
+                RockAngleJitterDeg = m.rockAngleJitterDeg,
+                RockRadiusJitterPx = m.rockRadiusJitterPx,
+                BushAngleJitterDeg = m.bushAngleJitterDeg,
+                BushRadiusJitterPx = m.bushRadiusJitterPx,
+                TreeJitterPx = m.treeJitterPx,
+                PlaceTries = m.placeTries,
+                BoundsMarginPx = m.boundsMarginPx,
+                MinGapPx = m.minGapPx,
+                MinPassagePx = m.minPassagePx,
+                SpawnClearPx = m.spawnClearPx,
+                MaxRetries = m.maxRetries,
                 GroveOutsideZonePx = FirstShrinkEndRadius(b.zone),
             };
         }

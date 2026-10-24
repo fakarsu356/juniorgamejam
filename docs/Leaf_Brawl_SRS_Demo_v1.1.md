@@ -255,10 +255,10 @@ Köşe koruları ilk daralma bitince (1270 − 220 = 1050 > 1000) tamamen alan d
 
 | Sabit kalanlar | Sapan öğeler |
 | --- | --- |
-| Ulu ağaç, merkez açıklığı, 4 doğma noktası; bütün öğe sayıları | Küme ve koru merkezleri, kayalar, çalılıklar, küme ve koru içindeki her ağaç; kümelerin ve korunun iç dizilimi rastgele döndürülür |
+| Ulu ağaç, merkez açıklığı, 4 kaya, 4 doğma noktası; bütün öğe sayıları | Küme ve koru merkezleri, çalılıklar, küme ve koru içindeki her ağaç; kümelerin ve korunun iç dizilimi rastgele döndürülür |
 
-- İlk sapma payları: küme ve koru merkezi ±6° ve ±50 px; kaya ±12° ve ±30 px; çalılık ±6° ve ±25 px; küme ve koru içindeki ağaçlar her eksende ±10 px. Değerler ayar dosyasında tutulur (NFR-05).
-- Üretimden sonra şu kurallar doğrulanır: (1) hiçbir öğe harita kenarından 40 px'ten fazla taşmaz; (2) gövde ve kayalar arasında en az 20 px boşluk kalır; (3) çalılık merkezi bir gövdeye 20 px'ten yakın olmaz ve çalılıklar üst üste binmez; (4) doğma noktalarının 150 px çevresi boştur; (5) küme ve koru ağaçları merkez açıklığa girmez; (6) koru ağaçları ilk daralma bitince tamamen alan dışında kalır; (7) küme ve koru daireleri arasında en az 80 px geçit kalır (tablodaki ≈160 px merkez değerdir). Bir kural bozulursa harita yeniden üretilir (en fazla 50 deneme); hiçbiri tutmazsa tablodaki merkez düzen kullanılır.
+- Sapma payları: küme ve koru merkezi ±20° ve ±150 px (kümeler kendi 45°'lik diliminde kalır); çalılık ±18° ve ±120 px; küme ve koru içindeki ağaçlar her eksende ±15 px. Kayalar merkez açıklığın parçasıdır ve sabit kalır. Değerler `balance.json` `map` bölümünde tutulur (NFR-05).
+- Üretimden sonra şu kurallar doğrulanır: (1) hiçbir öğe harita kenarından 40 px'ten fazla taşmaz; (2) gövde ve kayalar arasında en az 20 px boşluk kalır; (3) çalılık merkezi bir gövdeye 20 px'ten yakın olmaz ve çalılıklar üst üste binmez; (4) doğma noktalarının 150 px çevresi boştur; (5) küme ve koru ağaçları ile çalılıklar merkez açıklığa girmez; (6) koru ağaçları ilk daralma bitince tamamen alan dışında kalır; (7) küme ve koru daireleri arasında en az 80 px geçit kalır (tablodaki ≈160 px merkez değerdir). Öğeler sırayla yerleştirilir; kuralı bozan öğe yalnızca kendisi yeniden denenir (en fazla 30 deneme). Bir öğe yerleşemezse bütün harita yeniden üretilir (en fazla 50 deneme); hiçbiri tutmazsa tablodaki merkez düzen kullanılır.
 - Aynı tohum aynı haritayı verir. Botlar, yaprak üretimi ve görseller konumları sabit varsaymaz; ağaç, çalılık ve doğma noktalarını `Services.World` ve `Services.Visibility` üzerinden okur.
 
 ### 3.13 Ölçek ve pixel art
