@@ -1,10 +1,11 @@
+using System.IO;
 using LeafBrawl.Shared;
 using UnityEditor;
 using UnityEngine;
 
 namespace LeafBrawl.World
 {
-    /// <summary>Menü: Leaf Brawl → Haritayı Test Et. 1000 tohumla MapLayoutGenerator'ı dener, özeti Console'a yazar.</summary>
+    /// <summary>Menü: Leaf Brawl → Haritayı Test Et. 1000 tohumla MapLayoutGenerator'ı dener, özeti Console'a ve MapPreview/test_sonuc.txt'ye yazar.</summary>
     public static class MapLayoutTest
     {
         const int SeedCount = 1000;
@@ -44,12 +45,18 @@ namespace LeafBrawl.World
                 }
             }
 
-            Debug.Log(
+            string report =
                 $"[Harita Testi] {SeedCount} tohum\n" +
                 $"yedeğe düşen: {fallbacks}\n" +
                 $"ortalama deneme: {(double)totalAttempts / SeedCount:F2}\n" +
                 $"en çok deneme: {maxAttempts} (sınır {settings.MaxRetries})\n" +
-                $"öğe sayısı hatalı tohum: {wrongCounts}" + (firstWrong != null ? " (ilk: " + firstWrong + ")" : " (hepsi 1 ulu / 44 ağaç / 4 kaya / 4 doğma / 12 çalılık)"));
+                $"öğe sayısı hatalı tohum: {wrongCounts}" + (firstWrong != null ? " (ilk: " + firstWrong + ")" : " (hepsi 1 ulu / 44 ağaç / 4 kaya / 4 doğma / 12 çalılık)");
+
+            Debug.Log(report);
+
+            string dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "MapPreview"));
+            Directory.CreateDirectory(dir);
+            File.WriteAllText(Path.Combine(dir, "test_sonuc.txt"), report);
         }
     }
 }
