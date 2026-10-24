@@ -35,13 +35,14 @@ namespace LeafBrawl.World
         public float GroveOutsideZonePx;
 
         // ---- Sapma ve doğrulama [geçici: balance.json "map"e sözleşme PR'ı ile taşınacak] ----
-        public float AngleJitterDeg = 6f;        // küme ve koru merkezi
-        public float RadiusJitterPx = 50f;       // küme ve koru merkezi
-        public float RockAngleJitterDeg = 12f;
-        public float RockRadiusJitterPx = 30f;
-        public float BushAngleJitterDeg = 6f;
-        public float BushRadiusJitterPx = 25f;
-        public float TreeJitterPx = 10f;         // küme/koru içindeki her ağaç (x ve y ayrı)
+        public float AngleJitterDeg = 20f;       // küme ve koru: kendi dilimi içinde (küme adımı 45°)
+        public float RadiusJitterPx = 150f;      // küme ve koru
+        public float RockAngleJitterDeg = 0f;    // kayalar merkez açıklığın parçası: sabit
+        public float RockRadiusJitterPx = 0f;
+        public float BushAngleJitterDeg = 18f;
+        public float BushRadiusJitterPx = 120f;
+        public float TreeJitterPx = 15f;         // küme/koru içindeki her ağaç (x ve y ayrı)
+        public int PlaceTries = 30;              // tek bir küme/koru/çalılığın yerleşmek için deneme sayısı
         public float BoundsMarginPx = 40f;       // harita kenarından en az bu kadar içeride
         public float MinGapPx = 20f;             // gövde ve kaya arası en az boşluk
         public float MinPassagePx = 80f;         // küme/koru daireleri arası en az geçit

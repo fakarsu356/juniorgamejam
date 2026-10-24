@@ -47,8 +47,8 @@ namespace LeafBrawl.World
             int tries = Mathf.Max(1, s.MaxRetries);
             for (int attempt = 1; attempt <= tries; attempt++)
             {
-                MapLayout layout = Build(s, rng, true);
-                if (Validate(s, layout) == null)
+                MapLayout layout = BuildRandom(s, rng);
+                if (layout != null && Validate(s, layout) == null)
                 {
                     layout.Attempts = attempt;
                     return layout;
@@ -143,6 +143,159 @@ namespace LeafBrawl.World
             items.Add(new MapItem { Kind = kind, PosPx = pos, RadiusPx = s.TreeTrunkRadiusPx, Group = group });
         }
 
+        // ------------------------------------------------- sıralı rastgele yerleştirme
+        // Merkez (ulu ağaç, kayalar, doğma noktaları) sabit. Küme, koru ve çalılıklar kendi dilimlerinde
+        // rastgele yer seçer; her biri yerleşirken kurallara bakılır, olmazsa yalnız o öğe yeniden denenir.
+        // Bir öğe PlaceTries denemede yerleşmezse null döner (Generate yeni deneme başlatır).
+
+        static MapLayout BuildRandom(MapGenSettings s, Rng rng)
+        {
+            var layout = new MapLayout();
+            List<MapItem> items = layout.Items;
+
+            items.Add(new MapItem { Kind = MapItemKind.GreatTree, PosPx = Vector2.zero, RadiusPx = s.GreatTreeTrunkRadiusPx });
+
+            float rockRadius = s.RockSizePx * 0.5f * 1.4142136f;
+            for (int i = 0; i < s.RockAnglesDeg.Length; i++)
+            {
+                float ang = s.RockAnglesDeg[i] + Jit(rng, true, s.RockAngleJitterDeg);
+                float rad = s.RockRingPx + Jit(rng, true, s.RockRadiusJitterPx);
+                items.Add(new MapItem { Kind = MapItemKind.Rock, PosPx = Polar(rad, ang), RadiusPx = rockRadius, Group = i });
+            }
+
+            for (int i = 0; i < s.SpawnAnglesDeg.Length; i++)
+                items.Add(new MapItem { Kind = MapItemKind.Spawn, PosPx = Polar(s.SpawnRingPx, s.SpawnAnglesDeg[i]), RadiusPx = 0f, Group = i });
+
+            int tries = Mathf.Max(1, s.PlaceTries);
+
+            for (int i = 0; i < s.ClusterCount; i++)
+            {
+                bool placed = false;
+                for (int t = 0; t < tries && !placed; t++)
+                {
+                    int start = items.Count;
+                    float ang = s.ClusterStartDeg + i * s.ClusterStepDeg + Jit(rng, true, s.AngleJitterDeg);
+                    float rad = s.ClusterRingPx + Jit(rng, true, s.RadiusJitterPx);
+                    Vector2 center = Polar(rad, ang);
+                    float rot = rng.Range(0f, 360f);
+                    for (int k = 0; k < s.ClusterTreeCount; k++)
+                        AddTree(s, rng, true, items, MapItemKind.ClusterTree, i,
+                                center + Polar(s.ClusterTreeOffsetPx, rot + k * s.ClusterTreeStepDeg));
+                    placed = Commit(s, layout, start, true, center, s.ClusterRadiusPx);
+                }
+                if (!placed) return null;
+            }
+
+            for (int i = 0; i < s.GroveAnglesDeg.Length; i++)
+            {
+                bool placed = false;
+                for (int t = 0; t < tries && !placed; t++)
+                {
+                    int start = items.Count;
+                    float ang = s.GroveAnglesDeg[i] + Jit(rng, true, s.AngleJitterDeg);
+                    float rad = s.GroveRingPx + Jit(rng, true, s.RadiusJitterPx);
+                    Vector2 center = Polar(rad, ang);
+                    float rot = rng.Range(0f, 360f);
+                    for (int k = 0; k < s.GroveCenterTrees; k++)
+                        AddTree(s, rng, true, items, MapItemKind.GroveTree, i, center);
+                    for (int k = 0; k < s.GroveRingTrees; k++)
+                        AddTree(s, rng, true, items, MapItemKind.GroveTree, i,
+                                center + Polar(s.GroveRingOffsetPx, rot + k * s.GroveRingStepDeg));
+                    placed = Commit(s, layout, start, true, center, s.GroveRadiusPx);
+                }
+                if (!placed) return null;
+            }
+
+            for (int i = 0; i < s.OuterBushCount; i++)
+            {
+                bool placed = false;
+                for (int t = 0; t < tries && !placed; t++)
+                {
+                    int start = items.Count;
+                    float ang = s.OuterBushStartDeg + i * s.OuterBushStepDeg + Jit(rng, true, s.BushAngleJitterDeg);
+                    float rad = s.OuterBushRingPx + Jit(rng, true, s.BushRadiusJitterPx);
+                    items.Add(new MapItem { Kind = MapItemKind.OuterBush, PosPx = Polar(rad, ang), RadiusPx = s.OuterBushRadiusPx, Group = i });
+                    placed = Commit(s, layout, start, false, Vector2.zero, 0f);
+                }
+                if (!placed) return null;
+            }
+
+            for (int i = 0; i < s.InnerBushAnglesDeg.Length; i++)
+            {
+                bool placed = false;
+                for (int t = 0; t < tries && !placed; t++)
+                {
+                    int start = items.Count;
+                    float ang = s.InnerBushAnglesDeg[i] + Jit(rng, true, s.BushAngleJitterDeg);
+                    float rad = s.InnerBushRingPx + Jit(rng, true, s.BushRadiusJitterPx);
+                    items.Add(new MapItem { Kind = MapItemKind.InnerBush, PosPx = Polar(rad, ang), RadiusPx = s.InnerBushRadiusPx, Group = i });
+                    placed = Commit(s, layout, start, false, Vector2.zero, 0f);
+                }
+                if (!placed) return null;
+            }
+
+            return layout;
+        }
+
+        /// <summary>items[start..] yeni eklenen aday öğelerdir. Hepsi kurallara uyuyorsa (ve grupsa geçit payı varsa) kalır, yoksa silinir.</summary>
+        static bool Commit(MapGenSettings s, MapLayout layout, int start, bool isGroup, Vector2 center, float radius)
+        {
+            List<MapItem> items = layout.Items;
+            bool ok = true;
+            for (int k = start; k < items.Count && ok; k++)
+                ok = ItemFits(s, items, k);
+
+            if (ok && isGroup)
+            {
+                for (int g = 0; g < layout.Groups.Count; g++)
+                {
+                    if (Vector2.Distance(layout.Groups[g].CenterPx, center) < layout.Groups[g].RadiusPx + radius + s.MinPassagePx)
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!ok)
+            {
+                items.RemoveRange(start, items.Count - start);
+                return false;
+            }
+            if (isGroup) layout.Groups.Add(new MapGroup { CenterPx = center, RadiusPx = radius });
+            return true;
+        }
+
+        // items[k], kendinden önceki öğelere ve tek başına kurallara uyuyor mu (Validate'in 1-7 numaralı kuralları).
+        static bool ItemFits(MapGenSettings s, List<MapItem> items, int k)
+        {
+            MapItem a = items[k];
+            float half = s.MapSizePx * 0.5f - s.BoundsMarginPx;
+
+            if (Mathf.Abs(a.PosPx.x) + a.RadiusPx > half || Mathf.Abs(a.PosPx.y) + a.RadiusPx > half) return false;
+
+            for (int j = 0; j < k; j++)
+                if (items[j].Kind == MapItemKind.Spawn && Vector2.Distance(a.PosPx, items[j].PosPx) - a.RadiusPx < s.SpawnClearPx)
+                    return false;
+
+            if ((a.IsTree || a.IsBush) && a.PosPx.magnitude - a.RadiusPx < s.ClearingRadiusPx) return false;
+
+            if (a.Kind == MapItemKind.GroveTree && s.GroveOutsideZonePx > 0f
+                && a.PosPx.magnitude - a.RadiusPx <= s.GroveOutsideZonePx)
+                return false;
+
+            for (int j = 0; j < k; j++)
+            {
+                MapItem b = items[j];
+                float d = Vector2.Distance(a.PosPx, b.PosPx);
+                if (a.IsSolid && b.IsSolid && d - a.RadiusPx - b.RadiusPx < s.MinGapPx) return false;
+                if (a.IsBush && b.IsSolid && d < b.RadiusPx + s.MinGapPx) return false;
+                if (b.IsBush && a.IsSolid && d < a.RadiusPx + s.MinGapPx) return false;
+                if (a.IsBush && b.IsBush && d < a.RadiusPx + b.RadiusPx) return false;
+            }
+            return true;
+        }
+
         // ------------------------------------------------------------- doğrulama
 
         /// <summary>Kurallar sağlanıyorsa null; değilse ilk bozulan kuralın kısa açıklaması.</summary>
@@ -173,6 +326,10 @@ namespace LeafBrawl.World
                 // 3) Küme ve koru ağaçları merkez açıklığa girmesin
                 if (a.IsTree && a.PosPx.magnitude - a.RadiusPx < s.ClearingRadiusPx)
                     return "açıklıkta ağaç: " + a.PosPx;
+
+                // 3b) Çalılıklar da merkez açıklığa girmesin (merkez sabit kalır)
+                if (a.IsBush && a.PosPx.magnitude - a.RadiusPx < s.ClearingRadiusPx)
+                    return "açıklıkta çalılık: " + a.PosPx;
 
                 // 4) Koru ağaçları ilk daralmadan sonra tamamen alan dışında kalmalı (SRS 3.12, FR-73)
                 if (a.Kind == MapItemKind.GroveTree && s.GroveOutsideZonePx > 0f
